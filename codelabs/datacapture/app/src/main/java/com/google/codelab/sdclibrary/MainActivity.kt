@@ -18,11 +18,13 @@ package com.google.codelab.sdclibrary
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.fragment.app.commit
+import com.google.android.fhir.datacapture.QuestionnaireFragment
 
 class MainActivity : AppCompatActivity() {
-
   var questionnaireJsonString: String? = null
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
