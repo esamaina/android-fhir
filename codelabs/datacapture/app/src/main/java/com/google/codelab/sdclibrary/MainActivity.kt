@@ -17,29 +17,67 @@
 package com.google.codelab.sdclibrary
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
+import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.datacapture.QuestionnaireFragment
+import kotlinx.coroutines.launch
+
 
 class MainActivity : AppCompatActivity() {
-  var questionnaireJsonString: String? = null
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
 
-    // 4.2 Replace with code from the codelab to add a questionnaire fragment.
-  }
+    var questionnaireJsonString: String? = null
 
-  private fun submitQuestionnaire() =
-    lifecycleScope.launch {
-      // 5 Replace with code from the codelab to get a questionnaire response.
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-      // 6 Replace with code from the codelab to extract FHIR resources from QuestionnaireResponse.
+        // 4.2 Replace with code from the codelab to add a questionnaire fragment.
+        // Step 2: Configure a QuestionnaireFragment
+        questionnaireJsonString = getStringFromAssets("questionnaire.json")
+
+        val questionnaireFragment =
+            QuestionnaireFragment.builder().setQuestionnaire(questionnaireJsonString!!).build()
+
+        // Step 3: Add the QuestionnaireFragment to the FragmentContainerView
+        if (savedInstanceState == null) {
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                add(R.id.fragment_container_view, questionnaireFragment)
+            }
+        }
+// Submit button callback
+        supportFragmentManager.setFragmentResultListener(
+            QuestionnaireFragment.SUBMIT_REQUEST_KEY,
+            this,
+        ) { _, _ ->
+            submitQuestionnaire()
+        }
+
     }
 
-  private fun getStringFromAssets(fileName: String): String {
-    return assets.open(fileName).bufferedReader().use { it.readText() }
-  }
+    private fun submitQuestionnaire() =
+        lifecycleScope.launch {
+            // 5 Replace with code from the codelab to get a questionnaire response.
+            // Get a questionnaire response
+            val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view)
+                    as QuestionnaireFragment
+            val questionnaireResponse = fragment.getQuestionnaireResponse()
+
+            // Print the response to the log
+            val jsonParser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
+            val questionnaireResponseString =
+                jsonParser.encodeResourceToString(questionnaireResponse)
+            Log.d("response", questionnaireResponseString)
+
+            // 6 Replace with code from the codelab to extract FHIR resources from QuestionnaireResponse.
+        }
+
+    private fun getStringFromAssets(fileName: String): String {
+        return assets.open(fileName).bufferedReader().use { it.readText() }
+    }
+
 }
